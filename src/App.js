@@ -1,24 +1,56 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect, useState } from 'react'
+import Articles from './components/Articles'
+import Header from './components/Header'
+import SearchBox from './components/SearchBox'
 
-function App() {
+const App = () => {
+  const [searchContent, setSearchContent] = useState('react')
+  const [actualPage, setActualPage] = useState(0)
+  const [totalPage, setTotalPage] = useState(0)
+  const [articles, setArticles] = useState([])
+  const [firstLoad, setFirstLoad] = useState(true)
+
+
+  const handleChange = e => {
+    setSearchContent(e.target.value)
+    searchForArticles(e.target.value, actualPage)
+  }
+
+  const handleNextPage = () => {
+    if (actualPage < totalPage) {
+      setActualPage(actualPage + 1)
+      searchForArticles(searchContent, actualPage + 1)
+    } 
+  }
+
+  const handlePrevPage = () => {
+    if (actualPage > 0) {
+      setActualPage(actualPage - 1)
+      searchForArticles(searchContent, actualPage - 1)
+    }
+  }
+ 
+  const searchForArticles = async (query, page) => {
+    const res = await fetch(`https://hn.algolia.com/api/v1/search?query=${query}&page=${page}`)
+    const data = await res.json()
+    setArticles(data.hits)
+    setTotalPage(data.nbPages)
+  }
+
+  useEffect(() => {
+    if (firstLoad) {
+      searchForArticles(searchContent, actualPage)
+      setFirstLoad(false)
+    }
+  })
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <main className='font-mono bg-gray-700 min-h-screen text-white'>
+      <Header />
+      <SearchBox searchContent={searchContent} handleChange={handleChange}/>
+      <Articles actualPage={actualPage} articles={articles} handleNextPage={handleNextPage} handlePrevPage={handlePrevPage}/>
+      <div className='h-4'></div>
+    </main>
   );
 }
 
